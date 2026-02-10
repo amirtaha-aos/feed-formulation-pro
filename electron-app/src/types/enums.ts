@@ -17,7 +17,15 @@ export enum NutrientKey {
   CALCIUM = 'calcium',
   AVAILABLE_PHOSPHORUS = 'availablePhosphorus',
   SODIUM = 'sodium',
-  LINOLEIC_ACID = 'linoleicAcid'
+  LINOLEIC_ACID = 'linoleicAcid',
+  VITAMIN_A = 'vitaminA',
+  VITAMIN_D3 = 'vitaminD3',
+  VITAMIN_E = 'vitaminE',
+  MANGANESE = 'manganese',
+  ZINC = 'zinc',
+  COPPER = 'copper',
+  IRON = 'iron',
+  SELENIUM = 'selenium'
 }
 
 export enum StrainType {

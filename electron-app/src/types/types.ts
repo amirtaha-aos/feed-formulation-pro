@@ -17,6 +17,14 @@ export interface Ingredient {
     [NutrientKey.AVAILABLE_PHOSPHORUS]: number;
     [NutrientKey.SODIUM]: number;
     [NutrientKey.LINOLEIC_ACID]: number;
+    [NutrientKey.VITAMIN_A]: number;
+    [NutrientKey.VITAMIN_D3]: number;
+    [NutrientKey.VITAMIN_E]: number;
+    [NutrientKey.MANGANESE]: number;
+    [NutrientKey.ZINC]: number;
+    [NutrientKey.COPPER]: number;
+    [NutrientKey.IRON]: number;
+    [NutrientKey.SELENIUM]: number;
   };
 }
 

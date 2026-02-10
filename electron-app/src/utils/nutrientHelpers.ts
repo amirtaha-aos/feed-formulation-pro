@@ -16,6 +16,14 @@ const NUTRIENT_INFO: Record<NutrientKey, { name: string; unit: string }> = {
   [NutrientKey.AVAILABLE_PHOSPHORUS]: { name: 'Available Phosphorus', unit: '%' },
   [NutrientKey.SODIUM]: { name: 'Sodium', unit: '%' },
   [NutrientKey.LINOLEIC_ACID]: { name: 'Linoleic Acid', unit: '%' },
+  [NutrientKey.VITAMIN_A]: { name: 'Vitamin A', unit: 'IU/kg' },
+  [NutrientKey.VITAMIN_D3]: { name: 'Vitamin D3', unit: 'IU/kg' },
+  [NutrientKey.VITAMIN_E]: { name: 'Vitamin E', unit: 'mg/kg' },
+  [NutrientKey.MANGANESE]: { name: 'Manganese', unit: 'mg/kg' },
+  [NutrientKey.ZINC]: { name: 'Zinc', unit: 'mg/kg' },
+  [NutrientKey.COPPER]: { name: 'Copper', unit: 'mg/kg' },
+  [NutrientKey.IRON]: { name: 'Iron', unit: 'mg/kg' },
+  [NutrientKey.SELENIUM]: { name: 'Selenium', unit: 'mg/kg' },
 };
 
 export function enrichConstraint(basic: BasicConstraint): NutrientConstraint {
