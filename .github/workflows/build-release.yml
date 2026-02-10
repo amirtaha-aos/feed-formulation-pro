@@ -1,0 +1,169 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build for macOS
+    runs-on: macos-13
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: '5.9'
+
+      - name: Build for ${{ matrix.arch }}
+        run: |
+          swift build -c release --arch ${{ matrix.arch }}
+
+      - name: Create App Bundle
+        run: |
+          APP_NAME="Feed Formulation Pro"
+          BUNDLE_ID="com.khaleghi.feedformulation"
+          VERSION="2.1"
+          BUILD="77"
+          ARCH="${{ matrix.arch }}"
+
+          # Create app bundle structure
+          mkdir -p "${APP_NAME}.app/Contents/MacOS"
+          mkdir -p "${APP_NAME}.app/Contents/Resources"
+
+          # Copy executable
+          cp .build/${{ matrix.arch }}-apple-macosx/release/FeedFormulationPro "${APP_NAME}.app/Contents/MacOS/"
+
+          # Create Info.plist
+          cat > "${APP_NAME}.app/Contents/Info.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>FeedFormulationPro</string>
+              <key>CFBundleIdentifier</key>
+              <string>${BUNDLE_ID}</string>
+              <key>CFBundleName</key>
+              <string>${APP_NAME}</string>
+              <key>CFBundleDisplayName</key>
+              <string>${APP_NAME} - PHD Khaleghi</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${VERSION}</string>
+              <key>CFBundleVersion</key>
+              <string>${BUILD}</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>13.0</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSPrincipalClass</key>
+              <string>NSApplication</string>
+          </dict>
+          </plist>
+          EOF
+
+          # Create archive
+          zip -r "FeedFormulationPro-macOS-${ARCH}.zip" "${APP_NAME}.app"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FeedFormulationPro-macOS-${{ matrix.arch }}
+          path: FeedFormulationPro-macOS-${{ matrix.arch }}.zip
+          retention-days: 7
+
+  create-release:
+    name: Create Release
+    needs: build-macos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/FeedFormulationPro-macOS-arm64/FeedFormulationPro-macOS-arm64.zip
+            artifacts/FeedFormulationPro-macOS-x86_64/FeedFormulationPro-macOS-x86_64.zip
+          tag_name: ${{ github.ref_name }}
+          name: Feed Formulation Pro ${{ github.ref_name }}
+          body: |
+            ## Feed Formulation Pro v2.1
+
+            Professional-grade least-cost feed formulation software for poultry and livestock nutritionists.
+
+            ### Features
+            - 77 ingredients across 5 categories
+            - WPSA-based AMEn calculations
+            - SID amino acid values
+            - Multi-strain support (Ross, Cobb, Aviagen, Amino Chick, Dynamic Model)
+            - Linear programming optimizer
+            - Light/Dark mode interface
+
+            ### Downloads
+
+            **macOS Apple Silicon (M1/M2/M3/M4)**
+            - Download: `FeedFormulationPro-macOS-arm64.zip`
+            - Extract and move to Applications folder
+
+            **macOS Intel (x86_64)**
+            - Download: `FeedFormulationPro-macOS-x86_64.zip`
+            - Extract and move to Applications folder
+
+            **Windows Support**
+            Note: This version is built with SwiftUI which is Apple-exclusive. Windows support would require a separate implementation using cross-platform frameworks. If you need Windows support, please open an issue.
+
+            ### Documentation
+            - [User Guide PDF](https://github.com/amirtaha-aos/feed-formulation-pro/blob/master/docs/Feed-Formulation-Pro-User-Guide.pdf)
+            - [README](https://github.com/amirtaha-aos/feed-formulation-pro/blob/master/README.md)
+
+            ### Installation
+
+            ```bash
+            # Download and extract
+            unzip FeedFormulationPro-macOS-*.zip
+
+            # Move to Applications
+            mv "Feed Formulation Pro.app" /Applications/
+
+            # Open
+            open "/Applications/Feed Formulation Pro.app"
+            ```
+
+            ### Changelog
+            - Initial release
+            - 77 ingredients with complete nutritional data
+            - WPSA energy calculations
+            - SID amino acid support
+            - Multi-strain requirements
+            - Linear programming optimization
+
+            ---
+
+            🤖 Built with [Claude Code](https://claude.com/claude-code)
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
