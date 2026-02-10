@@ -1,0 +1,163 @@
+name: Build Electron App
+
+on:
+  push:
+    tags:
+      - 'v*-electron'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            arch: x64
+          - os: windows-latest
+            platform: win
+            arch: ia32
+          - os: macos-13
+            platform: mac
+            arch: x64
+          - os: macos-14
+            platform: mac
+            arch: arm64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: electron-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: electron-app
+        run: npm ci
+
+      - name: Build Electron app
+        working-directory: electron-app
+        run: |
+          if [ "${{ matrix.platform }}" == "win" ]; then
+            npm run build:win -- --${{ matrix.arch }}
+          elif [ "${{ matrix.platform }}" == "mac" ]; then
+            npm run build:mac -- --${{ matrix.arch }}
+          elif [ "${{ matrix.platform }}" == "linux" ]; then
+            npm run build:linux
+          fi
+        shell: bash
+
+      - name: List build output
+        working-directory: electron-app
+        run: ls -R release/
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FeedFormulationPro-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            electron-app/release/*.exe
+            electron-app/release/*.dmg
+            electron-app/release/*.AppImage
+            electron-app/release/*.deb
+          retention-days: 7
+
+  create-release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+          tag_name: ${{ github.ref_name }}
+          name: Feed Formulation Pro ${{ github.ref_name }} (Cross-Platform)
+          body: |
+            ## Feed Formulation Pro v2.1.0 - Cross-Platform Edition
+
+            Professional-grade least-cost feed formulation software now available for **Windows, macOS, and Linux**!
+
+            ### ✨ Features
+            - 77 ingredients across 5 categories
+            - WPSA-based AMEn calculations
+            - SID amino acid values
+            - Multi-strain support (Ross, Cobb, Aviagen, Amino Chick, Dynamic Model)
+            - Linear programming optimizer
+            - Light/Dark mode interface
+            - Cross-platform compatibility
+
+            ### 📥 Downloads
+
+            #### Windows
+            - **Windows 64-bit**: `FeedFormulationPro-Setup-x64.exe`
+            - **Windows 32-bit**: `FeedFormulationPro-Setup-ia32.exe`
+
+            Download and run the installer. Windows may show a security warning - click "More info" then "Run anyway".
+
+            #### macOS
+            - **Apple Silicon (M1/M2/M3/M4)**: `FeedFormulationPro-arm64.dmg`
+            - **Intel**: `FeedFormulationPro-x64.dmg`
+
+            Download, open the DMG, and drag to Applications folder.
+
+            #### Linux
+            - **AppImage**: `FeedFormulationPro-x64.AppImage` (Universal)
+            - **Debian/Ubuntu**: `FeedFormulationPro_x64.deb`
+
+            For AppImage: `chmod +x FeedFormulationPro-x64.AppImage && ./FeedFormulationPro-x64.AppImage`
+            For deb: `sudo dpkg -i FeedFormulationPro_x64.deb`
+
+            ### 🆕 What's New in Cross-Platform Edition
+            - Built with Electron for universal compatibility
+            - Identical features and functionality across all platforms
+            - Native installers for each platform
+            - Optimized performance
+
+            ### 📚 Documentation
+            - [User Guide PDF](https://github.com/amirtaha-aos/feed-formulation-pro/blob/master/docs/Feed-Formulation-Pro-User-Guide.pdf)
+            - [README](https://github.com/amirtaha-aos/feed-formulation-pro/blob/master/README.md)
+
+            ### 🔧 Technical Details
+            - **Framework**: Electron + React + TypeScript
+            - **Platforms**: Windows (x64, x86), macOS (Apple Silicon, Intel), Linux (x64)
+            - **License**: MIT
+
+            ---
+
+            🤖 Built with [Claude Code](https://claude.com/claude-code)
+
+            **PHD Khaleghi Feed Formulation Research**
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

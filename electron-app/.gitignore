@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-electron
+*.local
+.vscode
+.idea
+.DS_Store
+logs
+*.log
+out
+build
+release
+Thumbs.db
