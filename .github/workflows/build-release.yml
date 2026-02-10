@@ -40,7 +40,10 @@ jobs:
           mkdir -p "${APP_NAME}.app/Contents/Resources"
 
           # Copy executable
-          cp .build/${{ matrix.arch }}-apple-macosx/release/FeedFormulationPro "${APP_NAME}.app/Contents/MacOS/"
+          cp .build/${{ matrix.arch }}-apple-macosx/release/PhdKhaleghiFormola "${APP_NAME}.app/Contents/MacOS/"
+
+          # Rename to match app name
+          mv "${APP_NAME}.app/Contents/MacOS/PhdKhaleghiFormola" "${APP_NAME}.app/Contents/MacOS/FeedFormulationPro"
 
           # Create Info.plist
           cat > "${APP_NAME}.app/Contents/Info.plist" << EOF
